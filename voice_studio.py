@@ -7,7 +7,7 @@ import os
 # --- KONFIGURACJA STRONY ---
 st.set_page_config(page_title="Voice Studio AI", page_icon="🎙️", layout="centered")
 
-# --- SŁOWNIK JĘZYKOWY (PL NA 1 MIEJSCU) ---
+# --- SŁOWNIK JĘZYKOWY ---
 LANG = {
     "PL": {
         "title": "🎙️ Studio Głosu AI",
@@ -23,7 +23,10 @@ LANG = {
         "err_no_text": "⚠️ Proszę wpisać tekst lub wgrać plik.",
         "stats_chars": "Znaków:",
         "stats_time": "Szacowany czas:",
-        "coffee_msg": "Wesprzyj darmowe narzędzie:"
+        "coffee_msg": "Wesprzyj darmowe narzędzie:",
+        "theme_light": "☀️ Jasny",
+        "theme_dark": "🌙 Ciemny",
+        "contact_txt": "Kontakt 🚀"
     },
     "EN": {
         "title": "🎙️ AI Voice Studio",
@@ -39,7 +42,10 @@ LANG = {
         "err_no_text": "⚠️ Please upload a file or enter text.",
         "stats_chars": "Characters:",
         "stats_time": "Est. Time:",
-        "coffee_msg": "Support this free tool:"
+        "coffee_msg": "Support this free tool:",
+        "theme_light": "☀️ Light",
+        "theme_dark": "🌙 Dark",
+        "contact_txt": "Contact 🚀"
     }
 }
 
@@ -54,7 +60,7 @@ VOICES = {
     "🇫🇷 Français - Henri (Homme)": "fr-FR-HenriNeural"
 }
 
-# --- LOGIKA SILNIKA (SKLEJANIE PLIKÓW W LOCIE) ---
+# --- LOGIKA SILNIKA ---
 def bezpieczny_podzial_tekstu(tekst, max_znakow=3500):
     akapity = tekst.replace('\r\n', '\n').split('\n\n')
     paczki, obecna_paczka = [], ""
@@ -90,17 +96,14 @@ async def generuj_z_paskiem_postepu(tekst, plik_wyjsciowy, kod_glosu, rate_str, 
 
 # --- PANEL BOCZNY ---
 with st.sidebar:
-    # Elegancki, poziomy przełącznik języka (zamiast selectboxa)
     lang_choice = st.radio("Język", ["PL", "EN"], horizontal=True, label_visibility="collapsed")
     t = LANG[lang_choice]
     
     st.write("")
     
-    # Jasny motyw domyślnie (index 0 to Jasny, 1 to Ciemny)
-    theme_choice = st.radio("Motyw", ["☀️ Jasny", "🌙 Ciemny"], index=0, horizontal=True, label_visibility="collapsed")
+    theme_choice = st.radio("Motyw", [t["theme_light"], t["theme_dark"]], index=0, horizontal=True, label_visibility="collapsed")
     
-    # Dynamiczny CSS dostosowany idealnie do obu trybów
-    if "Jasny" in theme_choice:
+    if theme_choice == t["theme_light"]:
         st.markdown("""
             <style>
             #MainMenu {visibility: hidden;} footer {visibility: hidden;}
@@ -108,11 +111,15 @@ with st.sidebar:
             [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E7EB !important; }
             h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #111827 !important; }
             
-            /* Naprawa pól wpisywania w jasnym motywie */
+            /* Pola wpisywania */
             .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #FFFFFF !important; color: #111827 !important; border: 1px solid #D1D5DB !important; }
             div[data-baseweb="select"] span { color: #111827 !important; }
             
-            /* Złoty Przycisk (Jasny) */
+            /* Przycisk Browse Files - JASNY MOTYW */
+            [data-testid="stFileUploader"] button { background-color: #E5E7EB !important; color: #111827 !important; border: 1px solid #D1D5DB !important; font-weight: bold !important; }
+            [data-testid="stFileUploader"] button:hover { background-color: #D1D5DB !important; }
+            
+            /* Złoty Przycisk Akcji */
             div.stButton > button { background-color: #FFD700 !important; color: #000000 !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; transition: all 0.2s !important; padding: 10px !important;}
             div.stButton > button:hover { background-color: #FFC107 !important; box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.4) !important; transform: scale(1.01) !important; }
             </style>
@@ -121,16 +128,19 @@ with st.sidebar:
         st.markdown("""
             <style>
             #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-            /* Nowoczesny, szaro-granatowy Dark Mode */
             .stApp { background-color: #0F172A; color: #F8FAFC; }
             [data-testid="stSidebar"] { background-color: #020617 !important; border-right: 1px solid #1E293B !important; }
             h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #F8FAFC !important; }
             
-            /* Naprawa pól wpisywania w ciemnym motywie */
+            /* Pola wpisywania */
             .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #1E293B !important; color: #F8FAFC !important; border: 1px solid #334155 !important; }
             div[data-baseweb="select"] span { color: #F8FAFC !important; }
             
-            /* Złoty Przycisk (Ciemny) */
+            /* Przycisk Browse Files - CIEMNY MOTYW */
+            [data-testid="stFileUploader"] button { background-color: #334155 !important; color: #F8FAFC !important; border: 1px solid #475569 !important; font-weight: bold !important; }
+            [data-testid="stFileUploader"] button:hover { background-color: #475569 !important; }
+            
+            /* Złoty Przycisk Akcji */
             div.stButton > button { background-color: #FFD700 !important; color: #000000 !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; transition: all 0.2s !important; padding: 10px !important;}
             div.stButton > button:hover { background-color: #FFC107 !important; box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.3) !important; transform: scale(1.01) !important; }
             </style>
@@ -145,13 +155,13 @@ with st.sidebar:
     </a>
     """, unsafe_allow_html=True)
 
-# --- SOCIAL MEDIA (WYŚRODKOWANA STOPKA) ---
-social_html = """
-<div style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000; background-color: rgba(17,17,17,0.9); padding: 8px 24px; border-radius: 25px; border: 1px solid #333; backdrop-filter: blur(8px); box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
-    <span style="font-size: 13px; color: #F5F5F5; font-weight: bold; margin-right: 12px;">Contact 🚀</span>
-    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555;">|</span>
-    <a href="https://www.linkedin.com/in/dawid-kowszewicz/" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555;">|</span>
-    <a href="mailto:kowszewiczdawidd@gmail.com" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Email</a>
+# --- SOCIAL MEDIA (BEZPIECZNA STOPKA) ---
+social_html = f"""
+<div style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000; background-color: #111111 !important; padding: 8px 24px; border-radius: 25px; border: 1px solid #333 !important; box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
+    <span style="font-size: 13px; color: #F5F5F5 !important; font-weight: bold; margin-right: 12px;">{t['contact_txt']}</span>
+    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555 !important;">|</span>
+    <a href="https://www.linkedin.com/in/dawid-kowszewicz/" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555 !important;">|</span>
+    <a href="mailto:kowszewiczdawidd@gmail.com" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Email</a>
 </div>
 """
 st.markdown(social_html, unsafe_allow_html=True)
