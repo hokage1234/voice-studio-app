@@ -103,9 +103,17 @@ with st.sidebar:
     
     st.write("")
     
-    theme_choice = st.radio("Motyw", [t["theme_light"], t["theme_dark"]], index=0, horizontal=True, label_visibility="collapsed")
+    # Odporny na błędy przełącznik motywu (format_func tłumaczy etykiety w locie)
+    theme_choice = st.radio(
+        "Motyw", 
+        ["light", "dark"], 
+        index=0, 
+        horizontal=True, 
+        label_visibility="collapsed",
+        format_func=lambda x: t["theme_light"] if x == "light" else t["theme_dark"]
+    )
     
-    if theme_choice == t["theme_light"]:
+    if theme_choice == "light":
         st.markdown("""
             <style>
             #MainMenu {visibility: hidden;} footer {visibility: hidden;}
@@ -160,11 +168,12 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- SOCIAL MEDIA (BEZPIECZNA STOPKA) ---
+# UWAGA: Wklej poniżej swój link do Facebooka!
 social_html = f"""
 <div style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000; background-color: #111111 !important; padding: 8px 24px; border-radius: 25px; border: 1px solid #333 !important; box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
     <span style="font-size: 13px; color: #F5F5F5 !important; font-weight: bold; margin-right: 12px;">{t['contact_txt']}</span>
-    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555 !important;">|</span>
-    <a href="https://www.linkedin.com/in/dawid-kowszewicz/" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555 !important;">|</span>
+    <a href="https://www.facebook.com/twoj-profil" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555 !important;">|</span>
+    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555 !important;">|</span>
     <a href="mailto:kowszewiczdawidd@gmail.com" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Email</a>
 </div>
 """
@@ -216,6 +225,7 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
             nazwa_mp3 = tmp_audio.name
         
         try:
+            # Właściwe generowanie w tle
             asyncio.run(generuj_z_paskiem_postepu(
                 tekst_uzytkownika, nazwa_mp3, kod_glosu, rate_str, progress_bar, status_text, t["msg_working"]
             ))
@@ -223,13 +233,14 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
             st.success(t["msg_success"])
             st.balloons()
             
-            st.audio(nazwa_mp3, format="audio/mp3")
-            
-            # Wczytanie gotowego MP3 do pamięci
+            # Wczytanie pliku
             with open(nazwa_mp3, "rb") as audio_file:
                 audio_bytes = audio_file.read()
                 
-            # Klasyczny przycisk pobierania
+            # Odtwarzacz na ekranie
+            st.audio(audio_bytes, format="audio/mp3")
+            
+            # Złoty przycisk pobierania (jako opcja awaryjna i graficzna)
             st.download_button(
                 label=t["btn_dl_single"], 
                 data=audio_bytes, 
@@ -238,7 +249,7 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
                 use_container_width=True
             )
             
-            # Magia Auto-Pobierania w tle (wstrzyknięcie JS)
+            # Skrypt wymuszający auto-pobieranie z wykorzystaniem HTML i Base64
             b64_audio = base64.b64encode(audio_bytes).decode()
             auto_download_html = f"""
                 <a id="auto_dl_link" href="data:audio/mpeg;base64,{b64_audio}" download="Voice_Studio_Audio.mp3" style="display:none;">Download</a>
