@@ -103,7 +103,6 @@ with st.sidebar:
     
     st.write("")
     
-    # Odporny na błędy przełącznik motywu (format_func tłumaczy etykiety w locie)
     theme_choice = st.radio(
         "Motyw", 
         ["light", "dark"], 
@@ -121,12 +120,12 @@ with st.sidebar:
             [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E7EB !important; }
             h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #111827 !important; }
             
-            /* Pola wpisywania - z naprawionym kursorem i podświetleniem tekstu */
+            /* Pola wpisywania */
             .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #FFFFFF !important; color: #111827 !important; caret-color: #111827 !important; border: 1px solid #D1D5DB !important; }
             .stTextArea textarea::selection { background-color: #FFD700 !important; color: #000000 !important; }
             div[data-baseweb="select"] span { color: #111827 !important; }
             
-            /* Przycisk Browse Files - JASNY MOTYW */
+            /* Przycisk Browse Files */
             [data-testid="stFileUploader"] button { background-color: #E5E7EB !important; color: #111827 !important; border: 1px solid #D1D5DB !important; font-weight: bold !important; }
             [data-testid="stFileUploader"] button:hover { background-color: #D1D5DB !important; }
             
@@ -148,7 +147,7 @@ with st.sidebar:
             .stTextArea textarea::selection { background-color: #FFD700 !important; color: #000000 !important; }
             div[data-baseweb="select"] span { color: #F8FAFC !important; }
             
-            /* Przycisk Browse Files - CIEMNY MOTYW */
+            /* Przycisk Browse Files */
             [data-testid="stFileUploader"] button { background-color: #334155 !important; color: #F8FAFC !important; border: 1px solid #475569 !important; font-weight: bold !important; }
             [data-testid="stFileUploader"] button:hover { background-color: #475569 !important; }
             
@@ -167,14 +166,13 @@ with st.sidebar:
     </a>
     """, unsafe_allow_html=True)
 
-# --- SOCIAL MEDIA (BEZPIECZNA STOPKA) ---
-# UWAGA: Wklej poniżej swój link do Facebooka!
+# --- SOCIAL MEDIA (BEZPIECZNA STOPKA - POPRAWIONE LINKI) ---
 social_html = f"""
 <div style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000; background-color: #111111 !important; padding: 8px 24px; border-radius: 25px; border: 1px solid #333 !important; box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
     <span style="font-size: 13px; color: #F5F5F5 !important; font-weight: bold; margin-right: 12px;">{t['contact_txt']}</span>
-    <a href="https://www.facebook.com/twoj-profil" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555 !important;">|</span>
-    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555 !important;">|</span>
-    <a href="mailto:kowszewiczdawidd@gmail.com" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Email</a>
+    <a href="https://www.linkedin.com/in/dawid-kowszewicz/" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555 !important;">|</span>
+    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555 !important;">|</span>
+    <a href="mailto:kowszewiczdawid@gmail.com" target="_blank" style="color: #FFD700 !important; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Email</a>
 </div>
 """
 st.markdown(social_html, unsafe_allow_html=True)
@@ -225,7 +223,6 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
             nazwa_mp3 = tmp_audio.name
         
         try:
-            # Właściwe generowanie w tle
             asyncio.run(generuj_z_paskiem_postepu(
                 tekst_uzytkownika, nazwa_mp3, kod_glosu, rate_str, progress_bar, status_text, t["msg_working"]
             ))
@@ -233,14 +230,11 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
             st.success(t["msg_success"])
             st.balloons()
             
-            # Wczytanie pliku
             with open(nazwa_mp3, "rb") as audio_file:
                 audio_bytes = audio_file.read()
                 
-            # Odtwarzacz na ekranie
             st.audio(audio_bytes, format="audio/mp3")
             
-            # Złoty przycisk pobierania (jako opcja awaryjna i graficzna)
             st.download_button(
                 label=t["btn_dl_single"], 
                 data=audio_bytes, 
@@ -249,7 +243,6 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
                 use_container_width=True
             )
             
-            # Skrypt wymuszający auto-pobieranie z wykorzystaniem HTML i Base64
             b64_audio = base64.b64encode(audio_bytes).decode()
             auto_download_html = f"""
                 <a id="auto_dl_link" href="data:audio/mpeg;base64,{b64_audio}" download="Voice_Studio_Audio.mp3" style="display:none;">Download</a>
