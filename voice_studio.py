@@ -3,6 +3,8 @@ import edge_tts
 import asyncio
 import tempfile
 import os
+import base64
+import streamlit.components.v1 as components
 
 # --- KONFIGURACJA STRONY ---
 st.set_page_config(page_title="Voice Studio AI", page_icon="🎙️", layout="centered")
@@ -18,7 +20,7 @@ LANG = {
         "speed_lbl": "⚡ Prędkość czytania:",
         "btn_gen": "🎧 Generuj Audio",
         "msg_working": "Trwa nagrywanie w studiu...",
-        "msg_success": "✅ Generowanie zakończone!",
+        "msg_success": "✅ Generowanie zakończone! Trwa pobieranie...",
         "btn_dl_single": "📥 Pobierz plik MP3",
         "err_no_text": "⚠️ Proszę wpisać tekst lub wgrać plik.",
         "stats_chars": "Znaków:",
@@ -37,7 +39,7 @@ LANG = {
         "speed_lbl": "⚡ Reading Speed:",
         "btn_gen": "🎧 Generate Audio",
         "msg_working": "Recording in the studio...",
-        "msg_success": "✅ Audio is ready!",
+        "msg_success": "✅ Audio is ready! Downloading...",
         "btn_dl_single": "📥 Download MP3",
         "err_no_text": "⚠️ Please upload a file or enter text.",
         "stats_chars": "Characters:",
@@ -111,8 +113,9 @@ with st.sidebar:
             [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E7EB !important; }
             h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #111827 !important; }
             
-            /* Pola wpisywania */
-            .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #FFFFFF !important; color: #111827 !important; border: 1px solid #D1D5DB !important; }
+            /* Pola wpisywania - z naprawionym kursorem i podświetleniem tekstu */
+            .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #FFFFFF !important; color: #111827 !important; caret-color: #111827 !important; border: 1px solid #D1D5DB !important; }
+            .stTextArea textarea::selection { background-color: #FFD700 !important; color: #000000 !important; }
             div[data-baseweb="select"] span { color: #111827 !important; }
             
             /* Przycisk Browse Files - JASNY MOTYW */
@@ -133,7 +136,8 @@ with st.sidebar:
             h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #F8FAFC !important; }
             
             /* Pola wpisywania */
-            .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #1E293B !important; color: #F8FAFC !important; border: 1px solid #334155 !important; }
+            .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #1E293B !important; color: #F8FAFC !important; caret-color: #F8FAFC !important; border: 1px solid #334155 !important; }
+            .stTextArea textarea::selection { background-color: #FFD700 !important; color: #000000 !important; }
             div[data-baseweb="select"] span { color: #F8FAFC !important; }
             
             /* Przycisk Browse Files - CIEMNY MOTYW */
@@ -220,14 +224,30 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
             st.balloons()
             
             st.audio(nazwa_mp3, format="audio/mp3")
+            
+            # Wczytanie gotowego MP3 do pamięci
             with open(nazwa_mp3, "rb") as audio_file:
-                st.download_button(
-                    label=t["btn_dl_single"], 
-                    data=audio_file, 
-                    file_name="Voice_Studio_Audio.mp3", 
-                    mime="audio/mpeg", 
-                    use_container_width=True
-                )
+                audio_bytes = audio_file.read()
+                
+            # Klasyczny przycisk pobierania
+            st.download_button(
+                label=t["btn_dl_single"], 
+                data=audio_bytes, 
+                file_name="Voice_Studio_Audio.mp3", 
+                mime="audio/mpeg", 
+                use_container_width=True
+            )
+            
+            # Magia Auto-Pobierania w tle (wstrzyknięcie JS)
+            b64_audio = base64.b64encode(audio_bytes).decode()
+            auto_download_html = f"""
+                <a id="auto_dl_link" href="data:audio/mpeg;base64,{b64_audio}" download="Voice_Studio_Audio.mp3" style="display:none;">Download</a>
+                <script>
+                    document.getElementById('auto_dl_link').click();
+                </script>
+            """
+            components.html(auto_download_html, height=0)
+            
         except Exception as e:
             st.error(f"Wystąpił błąd podczas generowania: {str(e)}")
         finally:
