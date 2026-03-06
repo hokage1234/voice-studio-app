@@ -40,54 +40,6 @@ LANG = {
         "stats_chars": "Characters:",
         "stats_time": "Est. Time:",
         "coffee_msg": "Support this free tool:"
-    },
-    "ES": {
-        "title": "🎙️ Estudio de Voz IA",
-        "subtitle": "Convierte texto en audio profesional. 100% gratis.",
-        "upload_lbl": "📁 Subir documento (.txt)",
-        "text_lbl": "✍️ O pega tu texto aquí:",
-        "voice_lbl": "🗣️ Seleccionar voz:",
-        "speed_lbl": "⚡ Velocidad de lectura:",
-        "btn_gen": "🎧 Generar Audio",
-        "msg_working": "Grabando en el estudio...",
-        "msg_success": "✅ ¡Tu audio está listo!",
-        "btn_dl_single": "📥 Descargar MP3",
-        "err_no_text": "⚠️ Por favor, ingresa texto o sube un archivo.",
-        "stats_chars": "Caracteres:",
-        "stats_time": "Tiempo est.:",
-        "coffee_msg": "Apoya esta herramienta:"
-    },
-    "DE": {
-        "title": "🎙️ KI-Sprachstudio",
-        "subtitle": "Wandeln Sie Text in professionelles Audio um. 100% kostenlos.",
-        "upload_lbl": "📁 Dokument hochladen (.txt)",
-        "text_lbl": "✍️ Oder Text hier einfügen:",
-        "voice_lbl": "🗣️ Stimme wählen:",
-        "speed_lbl": "⚡ Lesegeschwindigkeit:",
-        "btn_gen": "🎧 Audio generieren",
-        "msg_working": "Aufnahme im Studio...",
-        "msg_success": "✅ Ihr Audio ist fertig!",
-        "btn_dl_single": "📥 MP3 Herunterladen",
-        "err_no_text": "⚠️ Bitte geben Sie Text ein.",
-        "stats_chars": "Zeichen:",
-        "stats_time": "Geschätzte Zeit:",
-        "coffee_msg": "Unterstützen Sie uns:"
-    },
-    "FR": {
-        "title": "🎙️ Studio Vocal IA",
-        "subtitle": "Convertissez du texte en audio. 100% gratuit.",
-        "upload_lbl": "📁 Télécharger le document (.txt)",
-        "text_lbl": "✍️ Ou collez votre texte ici:",
-        "voice_lbl": "🗣️ Choisir la voix:",
-        "speed_lbl": "⚡ Vitesse de lecture:",
-        "btn_gen": "🎧 Générer l'audio",
-        "msg_working": "Enregistrement en cours...",
-        "msg_success": "✅ Votre audio est prêt!",
-        "btn_dl_single": "📥 Télécharger MP3",
-        "err_no_text": "⚠️ Veuillez entrer du texte.",
-        "stats_chars": "Caractères:",
-        "stats_time": "Temps estimé:",
-        "coffee_msg": "Soutenez cet outil:"
     }
 }
 
@@ -98,14 +50,12 @@ VOICES = {
     "🇺🇸 English - Aria (Female)": "en-US-AriaNeural",
     "🇬🇧 English (UK) - Ryan (Male)": "en-GB-RyanNeural",
     "🇪🇸 Español - Alvaro (Hombre)": "es-ES-AlvaroNeural",
-    "🇪🇸 Español - Elvira (Mujer)": "es-ES-ElviraNeural",
     "🇩🇪 Deutsch - Killian (Männlich)": "de-DE-KillianNeural",
     "🇫🇷 Français - Henri (Homme)": "fr-FR-HenriNeural"
 }
 
 # --- LOGIKA SILNIKA (SKLEJANIE PLIKÓW W LOCIE) ---
 def bezpieczny_podzial_tekstu(tekst, max_znakow=3500):
-    """Dzieli tekst na akapity, by nie zablokować serwera, ale zwraca jako sekwencję do jednego pliku."""
     akapity = tekst.replace('\r\n', '\n').split('\n\n')
     paczki, obecna_paczka = [], ""
     for akapit in akapity:
@@ -127,59 +77,62 @@ def bezpieczny_podzial_tekstu(tekst, max_znakow=3500):
 async def generuj_z_paskiem_postepu(tekst, plik_wyjsciowy, kod_glosu, rate_str, progress_bar, status_text, msg_working):
     paczki = bezpieczny_podzial_tekstu(tekst)
     liczba_paczek = len(paczki)
-    
-    # Otwieramy jeden plik binarnie i dopisujemy do niego po kawałku
     with open(plik_wyjsciowy, 'wb') as plik_docelowy:
         for i, fragment in enumerate(paczki):
             procent = int(((i) / liczba_paczek) * 100)
-            status_text.text(f"{msg_working} ({procent}%)")
-            
+            status_text.markdown(f"**{msg_working} ({procent}%)**")
             communicate = edge_tts.Communicate(fragment, kod_glosu, rate=rate_str)
-            # Binarne pobieranie strumienia audio i sklejanie na żywo
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
                     plik_docelowy.write(chunk["data"])
-                    
             progress_bar.progress((i + 1) / liczba_paczek)
-            
-    status_text.text(f"{msg_working} (100%)")
+    status_text.markdown(f"**{msg_working} (100%)**")
 
 # --- PANEL BOCZNY ---
 with st.sidebar:
-    st.write("") # Puste miejsce zamiast Settings
-    
-    # Lista języków (PL domyślnie - index 0)
-    lang_choice = st.selectbox("🌐 Language / Język", ["PL", "EN", "ES", "DE", "FR"], index=0, label_visibility="collapsed")
+    # Elegancki, poziomy przełącznik języka (zamiast selectboxa)
+    lang_choice = st.radio("Język", ["PL", "EN"], horizontal=True, label_visibility="collapsed")
     t = LANG[lang_choice]
     
-    st.divider()
+    st.write("")
     
-    # Przełącznik bez napisu
-    theme_choice = st.radio("Theme", ["🌙 Dark Mode", "☀️ Light Mode"], label_visibility="collapsed")
+    # Jasny motyw domyślnie (index 0 to Jasny, 1 to Ciemny)
+    theme_choice = st.radio("Motyw", ["☀️ Jasny", "🌙 Ciemny"], index=0, horizontal=True, label_visibility="collapsed")
     
-    # Dynamiczny CSS
-    if "Light" in theme_choice:
+    # Dynamiczny CSS dostosowany idealnie do obu trybów
+    if "Jasny" in theme_choice:
         st.markdown("""
             <style>
             #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-            .stApp { background-color: #FFFFFF; color: #111827; }
-            [data-testid="stSidebar"] { background-color: #F8F9FA !important; border-right: 1px solid #E5E7EB !important; }
+            .stApp { background-color: #FAFAFA; color: #111827; }
+            [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E7EB !important; }
             h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #111827 !important; }
-            .stTextArea textarea { background-color: #FFFFFF !important; color: #111827 !important; border: 1px solid #D1D5DB !important; }
-            div.stButton > button { background-color: #FFD700 !important; color: #000000 !important; font-weight: bold !important; border: none !important; border-radius: 8px !important; }
-            div.stButton > button:hover { background-color: #FFC107 !important; transform: scale(1.02) !important; }
+            
+            /* Naprawa pól wpisywania w jasnym motywie */
+            .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #FFFFFF !important; color: #111827 !important; border: 1px solid #D1D5DB !important; }
+            div[data-baseweb="select"] span { color: #111827 !important; }
+            
+            /* Złoty Przycisk (Jasny) */
+            div.stButton > button { background-color: #FFD700 !important; color: #000000 !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; transition: all 0.2s !important; padding: 10px !important;}
+            div.stButton > button:hover { background-color: #FFC107 !important; box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.4) !important; transform: scale(1.01) !important; }
             </style>
             """, unsafe_allow_html=True)
     else:
         st.markdown("""
             <style>
             #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-            .stApp { background-color: #0A0A0A; color: #F5F5F5; }
-            [data-testid="stSidebar"] { background-color: #111111 !important; border-right: 1px solid #222222 !important; }
-            h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #F5F5F5 !important; }
-            .stTextArea textarea { background-color: #1A1A1A !important; color: #F5F5F5 !important; border: 1px solid #333333 !important; }
-            div.stButton > button { background-color: #FFD700 !important; color: #000000 !important; font-weight: bold !important; border: none !important; border-radius: 8px !important; }
-            div.stButton > button:hover { background-color: #FFC107 !important; box-shadow: 0px 0px 15px rgba(255, 215, 0, 0.4) !important; transform: scale(1.02) !important; }
+            /* Nowoczesny, szaro-granatowy Dark Mode */
+            .stApp { background-color: #0F172A; color: #F8FAFC; }
+            [data-testid="stSidebar"] { background-color: #020617 !important; border-right: 1px solid #1E293B !important; }
+            h1, h2, h3, p, label, .stMarkdown span, [data-testid="stSidebar"] * { color: #F8FAFC !important; }
+            
+            /* Naprawa pól wpisywania w ciemnym motywie */
+            .stTextArea textarea, .stFileUploader, div[data-baseweb="select"] > div { background-color: #1E293B !important; color: #F8FAFC !important; border: 1px solid #334155 !important; }
+            div[data-baseweb="select"] span { color: #F8FAFC !important; }
+            
+            /* Złoty Przycisk (Ciemny) */
+            div.stButton > button { background-color: #FFD700 !important; color: #000000 !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; transition: all 0.2s !important; padding: 10px !important;}
+            div.stButton > button:hover { background-color: #FFC107 !important; box-shadow: 0px 4px 15px rgba(255, 215, 0, 0.3) !important; transform: scale(1.01) !important; }
             </style>
             """, unsafe_allow_html=True)
 
@@ -192,14 +145,13 @@ with st.sidebar:
     </a>
     """, unsafe_allow_html=True)
 
-# --- SOCIAL MEDIA (WYŚRODKOWANA STOPKA KONTAKTOWA) ---
-# UWAGA: Podmień link do Facebooka na swój prawdziwy adres!
+# --- SOCIAL MEDIA (WYŚRODKOWANA STOPKA) ---
 social_html = """
-<div style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000; background-color: rgba(17,17,17,0.85); padding: 8px 20px; border-radius: 25px; border: 1px solid #333; backdrop-filter: blur(8px); box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
+<div style="position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000; background-color: rgba(17,17,17,0.9); padding: 8px 24px; border-radius: 25px; border: 1px solid #333; backdrop-filter: blur(8px); box-shadow: 0px 4px 10px rgba(0,0,0,0.5);">
     <span style="font-size: 13px; color: #F5F5F5; font-weight: bold; margin-right: 12px;">Contact 🚀</span>
-    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 500;">Facebook</a> <span style="color: #555;">|</span>
-    <a href="https://www.linkedin.com/in/dawid-kowszewicz/" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 500;">LinkedIn</a> <span style="color: #555;">|</span>
-    <a href="mailto:kowszewiczdawidd@gmail.com" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 500;">Email</a>
+    <a href="https://www.facebook.com/profile.php?id=61588513657984" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Facebook</a> <span style="color: #555;">|</span>
+    <a href="https://www.linkedin.com/in/dawid-kowszewicz/" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">LinkedIn</a> <span style="color: #555;">|</span>
+    <a href="mailto:kowszewiczdawidd@gmail.com" target="_blank" style="color: #FFD700; font-size: 13px; text-decoration: none; margin: 0 6px; font-weight: 600; letter-spacing: 0.5px;">Email</a>
 </div>
 """
 st.markdown(social_html, unsafe_allow_html=True)
@@ -236,6 +188,8 @@ with col_speed:
     predkosc = st.slider(t["speed_lbl"], min_value=-50, max_value=50, value=0, step=5, format="%d%%")
     rate_str = f"{predkosc:+d}%" if predkosc != 0 else "+0%"
 
+st.write("")
+
 # --- AKCJA GENEROWANIA ---
 if st.button(t["btn_gen"], type="primary", use_container_width=True):
     if liczba_znakow == 0:
@@ -260,7 +214,7 @@ if st.button(t["btn_gen"], type="primary", use_container_width=True):
                 st.download_button(
                     label=t["btn_dl_single"], 
                     data=audio_file, 
-                    file_name="Voice_Studio_Audiobook.mp3", 
+                    file_name="Voice_Studio_Audio.mp3", 
                     mime="audio/mpeg", 
                     use_container_width=True
                 )
